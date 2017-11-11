@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+import json
 import logging.config
 import subprocess
 
-import socks
-
-from AddressInputer import AddressInputer
+from AddressInputer import HttpAddressInputer
 from Util import Util
+
 
 class PacBot:
     __adressInputer = None
@@ -15,7 +15,7 @@ class PacBot:
     proxyServers = list()
 
     def __init__(self):
-        self.__adressInputer = AddressInputer()
+        return
 
     def run(self):
         while (self.__adressInputer.hasNext()):
@@ -26,31 +26,32 @@ class PacBot:
                 logging.error("invalid address: {0}".format(address))
                 continue
 
-            if (self.__directIps.__contains__(address[0])):
+            ip, port = address
+
+            if (self.__directIps.__contains__(ip)):
                 continue
 
-            if (self.__proxyIps.__contains__(address[0])):
+            if (self.__proxyIps.__contains__(ip)):
                 continue
 
-            if (self.__noWayIps.__contains__(address[0])):
+            if (self.__noWayIps.__contains__(ip)):
                 continue
 
             if (Util.tcpIsOk(address)):
-                self.__directIps.add(address.host)
+                self.__directIps.add(ip)
                 continue
 
             proxyServer = self.__matchProxyServer(address)
             if (proxyServer):
                 self.addToOSPAC(address, proxyServer)
-                self.__proxyIps.add(address[0])
+                self.__proxyIps.add(ip)
             else:
-                logging.warn("no way to address: {0}".format(address[0]))
-                self.__noWayIps.add(address[0])
-
+                logging.warn("no way to address: {0}".format(ip))
+                self.__noWayIps.add(ip)
 
     def __matchProxyServer(self, address):
 
-        for proxyServer in self.proxyServers :
+        for proxyServer in self.proxyServers:
             if (Util.tcpIsOkByPorxy(address, proxyServer)):
                 return proxyServer
 
@@ -60,35 +61,48 @@ class PacBot:
 
         file = open("clean.sh", "a")
 
-        try :
+        try:
             cmd = "iptables -t nat -I PREROUTING -p TCP -d {0} -j DNAT --to {1}:{2}".format(address[0],
-                                                                                            proxyServer.get('transparent_addr'),
-                                                                                            proxyServer.get('transparent_port'))
+                                                                                            proxyServer.get(
+                                                                                                'transparent_addr'),
+                                                                                            proxyServer.get(
+                                                                                                'transparent_port'))
             logging.debug("call '{0}'".format(cmd))
-            file.write(cmd.replace("-I", "-D"))
+            file.write(cmd.replace("-I", "-D") + "\n")
             subprocess.call(cmd, shell=True)
 
             cmd = "iptables -t nat -I PREROUTING -p UDP -d {0} -j DNAT --to {1}:{2}".format(address[0],
-                                                                                            proxyServer.get('transparent_addr'),
-                                                                                            proxyServer.get('transparent_port'))
+                                                                                            proxyServer.get(
+                                                                                                'transparent_addr'),
+                                                                                            proxyServer.get(
+                                                                                                'transparent_port'))
             logging.debug("call '{0}'".format(cmd))
-            file.write(cmd.replace("-I", "-D"))
+            file.write(cmd.replace("-I", "-D") + "\n")
             subprocess.call(cmd, shell=True)
 
 
         finally:
             file.close()
 
-if __name__ == '__main__':
+    def config(self, config_json_file):
 
+        jsonfile = open(config_json_file)
+        json_config = json.load(jsonfile)
+
+        for proxyServer in json_config["proxyServers"]:
+            self.proxyServers.append(proxyServer)
+
+        inputer_config = json_config["inputer"]
+        self.__adressInputer = HttpAddressInputer((inputer_config["addr"], inputer_config["port"]))
+
+        jsonfile.close()
+
+
+if __name__ == '__main__':
     logging.config.fileConfig('logging.conf')
 
     bot = PacBot()
 
-    bot.proxyServers.append({'proxy_type': socks.SOCKS5,
-                             'addr': '127.0.0.1',
-                             'port': 1080,
-                             'transparent_addr':"192.168.3.97",
-                             'transparent_port':12345})
+    bot.config("config.json")
 
     bot.run()

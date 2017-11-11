@@ -1,0 +1,19 @@
+{
+
+    "inputer":{
+        "type":"http_server",
+        "addr":"127.0.0.1",
+        "port": 23456
+    },
+
+    "proxyServers": [
+        {
+          "_comment":"proxy_type only is 2(SOCKS5)",
+          "proxy_type": 2,
+          "addr": "127.0.0.1",
+          "port": 1080,
+          "transparent_addr": "192.168.3.97",
+          "transparent_port": 12345
+        }
+    ]
+}
