@@ -57,17 +57,27 @@ class PacBot:
         return None
 
     def addToOSPAC(self, address, proxyServer):
-        cmd = "/sbin/iptables -t nat -I PREROUTING -p TCP -d {0} -j DNAT --to {1}:{2}".format(address[0],
-                                                                                        proxyServer.get('transparent_addr'),
-                                                                                        proxyServer.get('transparent_port'))
-        logging.debug("call '{0}'".format(cmd))
-        subprocess.call(cmd, shell=True)
 
-        cmd = "/sbin/iptables -t nat -I PREROUTING -p UDP -d {0} -j DNAT --to {1}:{2}".format(address[0],
-                                                                                        proxyServer.get('transparent_addr'),
-                                                                                        proxyServer.get('transparent_port'))
-        logging.debug("call '{0}'".format(cmd))
-        subprocess.call(cmd, shell=True)
+        file = open("clean.sh", "a")
+
+        try :
+            cmd = "iptables -t nat -I PREROUTING -p TCP -d {0} -j DNAT --to {1}:{2}".format(address[0],
+                                                                                            proxyServer.get('transparent_addr'),
+                                                                                            proxyServer.get('transparent_port'))
+            logging.debug("call '{0}'".format(cmd))
+            file.write(cmd.replace("-I", "-D"))
+            subprocess.call(cmd, shell=True)
+
+            cmd = "iptables -t nat -I PREROUTING -p UDP -d {0} -j DNAT --to {1}:{2}".format(address[0],
+                                                                                            proxyServer.get('transparent_addr'),
+                                                                                            proxyServer.get('transparent_port'))
+            logging.debug("call '{0}'".format(cmd))
+            file.write(cmd.replace("-I", "-D"))
+            subprocess.call(cmd, shell=True)
+
+
+        finally:
+            file.close()
 
 if __name__ == '__main__':
 
