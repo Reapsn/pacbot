@@ -57,14 +57,16 @@ class PacBot:
         return None
 
     def addToOSPAC(self, address, proxyServer):
-        cmd = "iptables -t nat -I PREROUTING -p TCP -d {0} -j DNAT --to {1}:{2}".format(address[0],
+        cmd = "/sbin/iptables -t nat -I PREROUTING -p TCP -d {0} -j DNAT --to {1}:{2}".format(address[0],
                                                                                         proxyServer.get('addr'),
                                                                                         proxyServer.get('port'))
+        logging.debug("call '{0}'".format(cmd))
         subprocess.call(cmd, shell=True)
 
-        cmd = "iptables -t nat -I PREROUTING -p UDP -d {0} -j DNAT --to {1}:{2}".format(address[0],
+        cmd = "/sbin/iptables -t nat -I PREROUTING -p UDP -d {0} -j DNAT --to {1}:{2}".format(address[0],
                                                                                         proxyServer.get('addr'),
                                                                                         proxyServer.get('port'))
+        logging.debug("call '{0}'".format(cmd))
         subprocess.call(cmd, shell=True)
 
 if __name__ == '__main__':
