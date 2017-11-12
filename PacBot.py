@@ -45,9 +45,10 @@ class PacBot:
             if (proxyServer):
                 self.addToOSPAC(address, proxyServer)
                 self.__proxyIps.add(ip)
+                logging.info("redirect {0}".format(ip))
             else:
-                logging.warn("no way to address: {0}".format(ip))
                 self.__noWayIps.add(ip)
+                logging.warn("no way to address: {0}".format(ip))
 
     def __matchProxyServer(self, address):
 
