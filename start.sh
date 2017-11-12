@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python PacBot.sh &
+python PacBot.py &
